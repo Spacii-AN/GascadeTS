@@ -19,8 +19,20 @@ A cross-platform Warframe tile scanner for Zariman Survival (Void Cascade) missi
    ```
 
 3. **Open your browser:**
-   - Go to: `http://localhost:9000`
+   - **On the same computer:** Go to `http://localhost:9000`
+   - **On other devices:** Go to `http://<your-computer-ip>:9000`
    - The interface will auto-refresh every 0.5 seconds
+
+**To find your computer's IP address:**
+- **Linux/Mac:** Run `ip addr` or `ifconfig` in terminal
+- **Windows:** Run `ipconfig` in command prompt
+- Look for your local network IP (usually starts with 192.168.x.x or 10.x.x.x)
+
+**Note:** If you can't access from other devices, you may need to allow port 9000 through your firewall:
+- **Linux (ufw):** `sudo ufw allow 9000`
+- **Linux (firewalld):** `sudo firewall-cmd --add-port=9000/tcp`
+- **Windows:** Allow Python through Windows Firewall
+- **Mac:** Check System Settings > Network > Firewall
 
 ## Features
 
@@ -38,7 +50,7 @@ A cross-platform Warframe tile scanner for Zariman Survival (Void Cascade) missi
    python3 web_scanner.py
    ```
 
-2. Open your browser to `http://localhost:9000`
+2. Open your browser to `http://localhost:9000` (or `http://<your-ip>:9000` from other devices)
 
 3. Start a Zariman Survival mission
 

@@ -395,9 +395,11 @@ def main():
     global scanner
     scanner = WebScanner()
     
-    # Start the web server
-    server = HTTPServer(('localhost', 9000), WebHandler)
+    # Start the web server (0.0.0.0 allows access from network devices)
+    server = HTTPServer(('0.0.0.0', 9000), WebHandler)
     print("🌐 Web server starting on http://localhost:9000")
+    print("🌐 Network access: http://<your-ip>:9000")
+    print("💡 To find your IP: Run 'ip addr' or 'ifconfig' in terminal")
     
     # Start the scanner in a separate thread
     scanner_thread = threading.Thread(target=scanner.track_tiles, daemon=True)
