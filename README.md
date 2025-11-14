@@ -4,6 +4,8 @@ A cross-platform Warframe tile scanner for Zariman Survival (Void Cascade) missi
 
 **Works on:** Windows, Linux, and macOS
 
+**Made by:** Spacii-AN
+
 ## Quick Start
 
 1. **Install dependencies:**
