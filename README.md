@@ -17,6 +17,7 @@ A cross-platform Warframe tile scanner for Zariman Survival (Void Cascade) missi
    ```bash
    python3 web_scanner.py
    ```
+   The scanner will automatically detect your Warframe `EE.log` file - no configuration needed!
 
 3. **Open your browser:**
    - **On the same computer:** Go to `http://localhost:9000`
@@ -39,9 +40,10 @@ A cross-platform Warframe tile scanner for Zariman Survival (Void Cascade) missi
 - ✅ **Fast tile detection** - 10x faster monitoring during missions
 - ✅ **Web interface** - Beautiful, real-time tile display in your browser
 - ✅ **Terminal output** - Shows all results in terminal (Hyprland compatible)
-- ✅ **Auto-detection** - Automatically detects mission start/end
+- ✅ **Auto-detection** - Automatically detects mission start/end and EE.log file location
 - ✅ **Attempt tracking** - Counts each mission attempt
 - ✅ **All tile types** - Hangar, Park, Serenity, Lunaro, Ramp
+- ✅ **Zero configuration** - Automatically finds your Warframe log file on Windows, Linux, and macOS
 
 ## Usage
 
@@ -62,12 +64,14 @@ A cross-platform Warframe tile scanner for Zariman Survival (Void Cascade) missi
 
 **In Terminal:**
 ```
+✅ Auto-detected EE.log at: C:\Users\YourUsername\AppData\Local\Warframe\EE.log
 🌐 Web Scanner started - Open http://localhost:9000 in your browser
 🔍 Starting to monitor log file...
+🔄 Starting real-time log monitoring...
 🎮 [Attempt 1] Zariman mission started!
 🚀 SWITCHING TO FAST MONITORING MODE!
-⚡ FAST DETECTION: Hangar found!
-⚡ FAST DETECTION: Park found!
+🎯 DETECTED: Hangar tile
+🎯 DETECTED: Park tile
 ```
 
 **In Web Browser:**
@@ -90,31 +94,25 @@ A cross-platform Warframe tile scanner for Zariman Survival (Void Cascade) missi
 
 ## Configuration
 
-### Setting the EE.log File Path
+### EE.log Auto-Detection
 
-The scanner needs to know where your Warframe log file is located. The path can vary depending on:
-- Your operating system (Windows/Linux/Mac)
-- Your Steam installation location
-- Whether you're using Proton/Wine
+The scanner **automatically detects** your Warframe log file location! No configuration needed in most cases.
 
-**To update the log file path:**
+**Auto-detection checks these locations:**
 
-1. Open `web_scanner.py` in a text editor
-2. Find this line (around line 280):
-   ```python
-   self.path = '/mnt/2tb/SteamLibrary/steamapps/compatdata/230410/pfx/drive_c/users/steamuser/AppData/Local/Warframe/EE.log'
-   ```
-3. Replace it with your actual log file path
+- **Windows:** `%LOCALAPPDATA%\Warframe\EE.log` (typically `C:\Users\YourUsername\AppData\Local\Warframe\EE.log`)
+- **Linux (Steam Proton):** 
+  - `~/.steam/steam/steamapps/compatdata/230410/pfx/drive_c/users/steamuser/AppData/Local/Warframe/EE.log`
+  - `~/.local/share/Steam/steamapps/compatdata/230410/pfx/drive_c/users/steamuser/AppData/Local/Warframe/EE.log`
+  - Searches for `SteamLibrary` folders in common mount points (e.g., `/mnt`)
+- **macOS:** `~/Library/Application Support/Warframe/EE.log`
 
-**Common locations:**
-- **Linux (Steam Proton):** `/path/to/SteamLibrary/steamapps/compatdata/230410/pfx/drive_c/users/steamuser/AppData/Local/Warframe/EE.log`
-- **Windows:** `C:\Users\YourUsername\AppData\Local\Warframe\EE.log`
-- **Mac:** `~/Library/Application Support/Warframe/EE.log`
+**If auto-detection fails:**
 
-**To find your log file:**
-1. Launch Warframe once
-2. Search for `EE.log` on your system
-3. Copy the full path and update it in `web_scanner.py`
+The scanner will search common directories for the `EE.log` file. If it still can't find it:
+1. Make sure Warframe has been run at least once (to generate `EE.log`)
+2. Check the terminal output - it will show the path it's trying to use
+3. If needed, you can manually set the path in `web_scanner.py` by modifying the `find_ee_log()` function
 
 ## Files
 

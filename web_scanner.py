@@ -9,9 +9,114 @@ import re
 import time
 import json
 import threading
+import platform
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
+
+def find_ee_log():
+    """
+    Auto-detect the EE.log file location across different platforms.
+    Returns the path if found, None otherwise.
+    """
+    system = platform.system()
+    possible_paths = []
+    
+    # Windows paths
+    if system == 'Windows':
+        localappdata = os.getenv('LOCALAPPDATA')
+        if localappdata:
+            possible_paths.append(os.path.join(localappdata, 'Warframe', 'EE.log'))
+        # Also check common user profile location
+        username = os.getenv('USERNAME')
+        if username:
+            possible_paths.append(os.path.join('C:', 'Users', username, 'AppData', 'Local', 'Warframe', 'EE.log'))
+    
+    # Linux paths (Steam/Proton)
+    elif system == 'Linux':
+        # Common Steam library locations
+        home = os.path.expanduser('~')
+        steam_paths = [
+            os.path.join(home, '.steam', 'steam', 'steamapps', 'compatdata', '230410', 'pfx', 'drive_c', 'users', 'steamuser', 'AppData', 'Local', 'Warframe', 'EE.log'),
+            os.path.join(home, '.local', 'share', 'Steam', 'steamapps', 'compatdata', '230410', 'pfx', 'drive_c', 'users', 'steamuser', 'AppData', 'Local', 'Warframe', 'EE.log'),
+        ]
+        
+        # Check for Steam library folders
+        steam_lib_paths = [
+            os.path.join(home, '.steam', 'steam', 'steamapps'),
+            os.path.join(home, '.local', 'share', 'Steam', 'steamapps'),
+        ]
+        
+        # Look for SteamLibrary folders
+        for steam_lib in steam_lib_paths:
+            if os.path.isdir(steam_lib):
+                parent = os.path.dirname(steam_lib)
+                # Check parent directory for SteamLibrary folders
+                if os.path.isdir(parent):
+                    for item in os.listdir(parent):
+                        if 'SteamLibrary' in item or 'steamapps' in item:
+                            lib_path = os.path.join(parent, item) if 'SteamLibrary' in item else parent
+                            compat_path = os.path.join(lib_path, 'steamapps', 'compatdata', '230410', 'pfx', 'drive_c', 'users', 'steamuser', 'AppData', 'Local', 'Warframe', 'EE.log')
+                            if os.path.isfile(compat_path):
+                                possible_paths.append(compat_path)
+        
+        possible_paths.extend(steam_paths)
+    
+    # macOS paths
+    elif system == 'Darwin':
+        home = os.path.expanduser('~')
+        possible_paths.append(os.path.join(home, 'Library', 'Application Support', 'Warframe', 'EE.log'))
+    
+    # Check all possible paths
+    for path in possible_paths:
+        if os.path.isfile(path):
+            return path
+    
+    # If not found in default locations, try searching common directories
+    print("🔍 EE.log not found in default locations, searching...")
+    search_dirs = []
+    
+    if system == 'Windows':
+        localappdata = os.getenv('LOCALAPPDATA')
+        if localappdata:
+            search_dirs.append(os.path.dirname(localappdata))  # Search in AppData parent
+        search_dirs.append(os.path.join('C:', 'Users'))
+    elif system == 'Linux':
+        home = os.path.expanduser('~')
+        search_dirs.append(os.path.join(home, '.steam'))
+        search_dirs.append(os.path.join(home, '.local', 'share', 'Steam'))
+        # Also search in common mount points
+        if os.path.isdir('/mnt'):
+            for item in os.listdir('/mnt'):
+                mnt_path = os.path.join('/mnt', item)
+                if os.path.isdir(mnt_path):
+                    search_dirs.append(mnt_path)
+    elif system == 'Darwin':
+        home = os.path.expanduser('~')
+        search_dirs.append(os.path.join(home, 'Library', 'Application Support'))
+    
+    # Search for EE.log in these directories (limit depth to avoid long searches)
+    for search_dir in search_dirs:
+        if not os.path.isdir(search_dir):
+            continue
+        try:
+            for root, dirs, files in os.walk(search_dir):
+                # Limit search depth to 10 levels to avoid very long searches
+                depth = root[len(search_dir):].count(os.sep)
+                if depth > 10:
+                    dirs[:] = []  # Don't recurse deeper
+                    continue
+                
+                if 'EE.log' in files:
+                    found_path = os.path.join(root, 'EE.log')
+                    # Verify it's in a Warframe directory
+                    if 'Warframe' in found_path:
+                        print(f"✅ Found EE.log at: {found_path}")
+                        return found_path
+        except (PermissionError, OSError):
+            continue  # Skip directories we can't access
+    
+    return None
 
 class WebHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -229,7 +334,24 @@ class WebHandler(BaseHTTPRequestHandler):
 
 class WebScanner:
     def __init__(self):
-        self.path = '/mnt/2tb/SteamLibrary/steamapps/compatdata/230410/pfx/drive_c/users/steamuser/AppData/Local/Warframe/EE.log'
+        # Auto-detect EE.log location
+        detected_path = find_ee_log()
+        if detected_path:
+            self.path = detected_path
+            print(f"✅ Auto-detected EE.log at: {self.path}")
+        else:
+            # Fallback to a default path (will show error if not found)
+            system = platform.system()
+            if system == 'Windows':
+                localappdata = os.getenv('LOCALAPPDATA', '')
+                self.path = os.path.join(localappdata, 'Warframe', 'EE.log') if localappdata else 'C:\\Users\\YourUsername\\AppData\\Local\\Warframe\\EE.log'
+            elif system == 'Linux':
+                self.path = os.path.expanduser('~/.steam/steam/steamapps/compatdata/230410/pfx/drive_c/users/steamuser/AppData/Local/Warframe/EE.log')
+            else:  # macOS
+                self.path = os.path.expanduser('~/Library/Application Support/Warframe/EE.log')
+            print(f"⚠️  Could not auto-detect EE.log, using default path: {self.path}")
+            print("💡 Please ensure Warframe has been run at least once to generate EE.log")
+        
         self.status_text = 'Awaiting Cascade...'
         self.status_color = 'red'
         self.mission_status = 'Awaiting mission...'
